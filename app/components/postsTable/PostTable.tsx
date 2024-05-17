@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styles from './PostsTable.module.css';
 import { FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import Pagination from '../pagination/Pagination';
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'; 
 
 interface Post {
     id: string;
@@ -13,15 +13,15 @@ interface Post {
 }
 
 const PostsTable: React.FC = () => {
-
     const router = useRouter();
-    
+
     const [posts, setPosts] = useState<Post[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const postsPerPage = 5;
-    const [editingPost, setEditingPost] = useState<Post | null>(null);
     const [newPostTitle, setNewPostTitle] = useState('');
     const [newPostContent, setNewPostContent] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
 
     useEffect(() => {
         const fetchPosts = async () => {
@@ -33,6 +33,7 @@ const PostsTable: React.FC = () => {
                 const data = await response.json();
                 console.log('Posts fetched:', data);
                 setPosts(data.data);
+                setFilteredPosts(data.data); 
             } catch (error) {
                 console.error('Error fetching posts:', error);
                 setPosts([]);
@@ -47,26 +48,30 @@ const PostsTable: React.FC = () => {
         return words.length > wordLimit ? words.slice(0, wordLimit).join(' ') + '...' : content;
     };
 
+    const onViewDetails = (id: string) => {
+        router.push(`/pages/posts/details/${id}`);
+    };
 
-
-
-    const onViewDetails = (post :Post) => {
-        router.push(`/pages/posts/${post.id}`);    };
+    const onUpdate = (post: Post) => {
+        router.push(`/pages/posts/update/${post.id}`); 
+    };
 
     const onDelete = async (id: string) => {
         try {
-            const response = await fetch(`pages/api/posts/${id}`, {
+            const response = await fetch(`pages//api/posts/${id}`, {
                 method: 'DELETE'
             });
             const data = await response.json();
             if (data.success) {
                 console.log('Post deleted:', data.data);
-                setPosts(posts.filter(post => post.id !== id)); 
+                setPosts(posts.filter(post => post.id !== id));
+                setFilteredPosts(filteredPosts.filter(post => post.id !== id)); 
             }
         } catch (error) {
             console.error('Error deleting post:', error);
         }
     };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const newPost = { title: newPostTitle, content: newPostContent };
@@ -81,6 +86,7 @@ const PostsTable: React.FC = () => {
             if (data.success) {
                 console.log('Post created:', data.data);
                 setPosts([...posts, data.data]);
+                setFilteredPosts([...filteredPosts, data.data]); 
                 setNewPostTitle('');
                 setNewPostContent('');
             }
@@ -88,47 +94,69 @@ const PostsTable: React.FC = () => {
             console.error('Error creating post:', error);
         }
     };
+
+    const handleSearchInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const query = event.target.value;
+        setSearchQuery(query);
+        const filtered = posts.filter((post) =>
+            post.title.toLowerCase().includes(query.toLowerCase()) ||
+            post.content.toLowerCase().includes(query.toLocaleLowerCase()) );
+        setFilteredPosts(filtered);
+    };
+
     const indexOfLastPost = currentPage * postsPerPage;
     const indexOfFirstPost = indexOfLastPost - postsPerPage;
-    const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
+    const currentPosts = searchQuery ? filteredPosts.slice(indexOfFirstPost, indexOfLastPost) : posts.slice(indexOfFirstPost, indexOfLastPost);
 
     return (
-        <div>
-        <table className={styles.table}>
-            <thead>
-                <tr>
-                    <th className={styles.tableHeader}>NO</th>
-                    <th className={styles.tableHeader}>Title</th>
-                    <th className={styles.tableHeader}>Snippet</th>
-                    <th className={styles.tableHeader}>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {currentPosts.map((post, index) => (
-                    <tr key={post.id}>
-                        <td className={styles.tableCell}>{indexOfFirstPost + index + 1}</td>
-                        <td className={styles.tableCell}>{post.title}</td>
-                        <td className={styles.tableCell}>{getSnippet(post.content)}</td>
-                        <td className={styles.tableCell}>
-                            <button className={styles.actionButton} onClick={() => onViewDetails(post)}>
-                                <FaEye />
-                            </button>
-                            <button className={styles.actionButton} onClick={() => onDelete(post.id)}>
-                                <FaTrash />
-                            </button>
-                        </td>
+        <div className={styles.container}>
+            <div className={styles.searchContainer}>
+                <input
+                    type="text"
+                    placeholder="Search by title or content..."
+                    value={searchQuery}
+                    onChange={handleSearchInputChange}
+                    className={styles.searchBar}
+                />
+            </div>
+            <table className={styles.table}>
+                <thead>
+                    <tr>
+                        <th className={styles.tableHeader}>NO</th>
+                        <th className={styles.tableHeader}>Title</th>
+                        <th className={styles.tableHeader}>Snippet</th>
+                        <th className={styles.tableHeader}>Action</th>
                     </tr>
-                ))}
-            </tbody>
-        </table>
-        <Pagination
-        pageNumber={currentPage}
-        setPageNumber={setCurrentPage}
-        totalItem={posts.length}
-        perPage={postsPerPage}
-        showItem={5}
-    />
-    <form onSubmit={handleSubmit} className={styles.form}>
+                </thead>
+                <tbody>
+                    {currentPosts.map((post, index) => (
+                        <tr key={post.id}>
+                            <td className={styles.tableCell}>{indexOfFirstPost + index + 1}</td>
+                            <td className={styles.tableCell}>{post.title}</td>
+                            <td className={styles.tableCell}>{getSnippet(post.content)}</td>
+                            <td className={styles.tableCell}>
+                                <button className={styles.actionButton} onClick={() => onViewDetails(post.id)}>
+                                    <FaEye />
+                                </button>
+                                <button className={styles.actionButton} onClick={() => onUpdate(post)}>
+                                    <FaEdit />
+                                </button>
+                                <button className={styles.actionButton} onClick={() => onDelete(post.id)}>
+                                    <FaTrash />
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+            <Pagination
+                pageNumber={currentPage}
+                setPageNumber={setCurrentPage}
+                totalItem={searchQuery ? filteredPosts.length : posts.length}
+                perPage={postsPerPage}
+                showItem={5}
+            />
+            <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formGroup}>
                     <label htmlFor="title">Title</label>
                     <input
@@ -152,7 +180,7 @@ const PostsTable: React.FC = () => {
                 </div>
                 <button type="submit" className={styles.submitButton}>Add Post</button>
             </form>
-    </div>
+        </div>
     );
 };
 

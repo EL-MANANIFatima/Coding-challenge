@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';  
-import Layout from '../../../components/layout/Layout';
-import styles from '../../../components/postsTable/PostsTable.module.css';
+import Layout from '../../../../components/layout/Layout';
+import styles from '../../../../components/postsTable/PostsTable.module.css';
 import { format } from 'date-fns'; 
 
 interface Post {
