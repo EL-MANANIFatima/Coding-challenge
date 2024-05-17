@@ -1,22 +1,19 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../../../utils/connect';
 import { NextApiRequest } from 'next';
+import { extractIdFromUrl } from '@/utils/functionUtils';
 
-type Data = {
-    success: boolean;
-    data?: any;
-    message?: string;
-};
 
+
+/*
+In this file , I defined functions that would handle HTTP request related to 
+specific post
+*/
+
+//Fetch a specific post
 export  async function GET(req: NextApiRequest) {
     try {
-        if (!req.url) {
-            return NextResponse.json({ success: false, message: "Url missing" });
-        }
-        const url = new URL(req.url, `http://${req.headers.host}`);
-        const pathname = url.pathname;
-        const parts = pathname.split('/');
-        const id = parts[parts.length - 1];
+        const id = extractIdFromUrl(req);
 
         if (!id) {
             return NextResponse.json({ success: false, message: "ID missing" });
@@ -38,15 +35,13 @@ export  async function GET(req: NextApiRequest) {
 }
 
 
-
+//Update a post
 export async function PUT(req : any) {
-    if (!req.url) {
-        return NextResponse.json({ success: false, message: "Url missing" });
+
+    const id = extractIdFromUrl(req);
+    if (!id) {
+        return NextResponse.json({ success: false, message: "ID missing" });
     }
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const pathname = url.pathname;
-    const parts = pathname.split('/');
-    const id = parts[parts.length - 1];
     const { title, content } = await req.json();
 
     try {
@@ -54,26 +49,23 @@ export async function PUT(req : any) {
             where: { id: id as string },
             data: { title, content, updatedAt: new Date() } 
         });
-        return NextResponse.json({ success: true, data: updated });
+        return NextResponse.json({ success: true, data: updated ,message:"The post has been updated successfully"});
     } catch (error) {
         return NextResponse.json({ success: false, message: "Failed to update post" });
     }
 }
 
+//Delete a post
 export async function DELETE(req: any) {
-    if (!req.url) {
-        return NextResponse.json({ success: false, message: "Url missing" });
+    const id = extractIdFromUrl(req);
+    if (!id) {
+        return NextResponse.json({ success: false, message: "ID missing" });
     }
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const pathname = url.pathname;
-    const parts = pathname.split('/');
-    const id = parts[parts.length - 1];
-
     try {
         const deletedPost = await prisma.post.delete({
             where: { id: id as string }
         });
-        return NextResponse.json({ success: true, data: deletedPost });
+        return NextResponse.json({ success: true, data: deletedPost ,message :"The post has been deleted successfully" });
     } catch (error) {
         return NextResponse.json({ success: false, message: "Failed to delete post" });
     }

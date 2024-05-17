@@ -4,6 +4,8 @@ import { useRouter, useParams } from 'next/navigation';
 import Layout from '../../../../components/layout/Layout';
 import styles from '../../../../components/postsTable/PostsTable.module.css';
 import { format } from 'date-fns'; 
+import { toast } from 'react-toastify';
+
 
 interface Post {
   id: string;
@@ -12,10 +14,18 @@ interface Post {
   createdAt : string;
 }
 
+/*
+This page is for updating a post as the name suggests
+*/
+
 const EditPost = () => {
   const router = useRouter();
   const { id } = useParams(); 
   const [post, setPost] = useState<Post | null>(null);
+
+  /*
+  This code fitches the post to update based on the id .
+  */
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -26,12 +36,11 @@ const EditPost = () => {
           });
           const data = await response.json();
           if (data.success) {
-            console.log('Fetched post:', data.data);
             const formattedPost = { ...data.data, createdAt: format(new Date(data.data.createdAt), 'yyyy-MM-dd HH:mm:ss') };
             setPost(formattedPost);
           }
         } catch (error) {
-          console.error('Error fetching post:', error);
+          toast.error('Error fetching the post ');
         }
       }
     };
@@ -41,6 +50,9 @@ const EditPost = () => {
     }
   }, [id]);  
 
+  /*
+  This code updates the post
+  */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (post) {
@@ -52,12 +64,12 @@ const EditPost = () => {
         });
         const data = await response.json();
         if (data.success) {
-          router.push('/');
+          toast.success(data.message);
         } else {
-          throw new Error(data.message || 'Failed to update the post');
-        }
+          toast.error('Error updating the post ');
+           }
       } catch (error) {
-        console.error('Error updating post:', error);
+        toast.error('Error updating the post ');
       }
     }
   };
@@ -77,7 +89,7 @@ const EditPost = () => {
             type="text"
             id="title"
             value={post.title} 
-            onChange={(e) => setPost({ ...post, title: e.target.value })} // Update title property
+            onChange={(e) => setPost({ ...post, title: e.target.value })} 
             className={styles.input}
             required
           />
@@ -87,7 +99,7 @@ const EditPost = () => {
           <textarea
             id="content"
             value={post.content} 
-            onChange={(e) => setPost({ ...post, content: e.target.value })} // Update content property
+            onChange={(e) => setPost({ ...post, content: e.target.value })} 
             className={styles.textarea}
             required
           ></textarea>
@@ -100,10 +112,11 @@ const EditPost = () => {
             value={post.createdAt}
             onChange={handleChange}
             className={styles.input}
-            disabled // Disable input
+            disabled 
           />
         </div>
-        <button type="submit" className={styles.submitButton}>Update Post</button> {/* Corrected button label */}
+        <button type="submit" className={styles.submitButton}>Update Post</button> 
+
       </form>
     </Layout>
   );

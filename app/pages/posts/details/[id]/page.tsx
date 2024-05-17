@@ -4,19 +4,18 @@ import { useRouter, useParams } from 'next/navigation';
 import Layout from '../../../../components/layout/Layout';
 import styles from '../../../../../public/style.module.css';
 import { format } from 'date-fns';
+import {Post } from '@/app/types/intercaes'
 
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-}
 
+/*
+This page is used to view the details of a post .
+*/
 const PostDetails = () => {
   const router = useRouter();
   const { id } = useParams();
   const [post, setPost] = useState<Post | null>(null);
 
+  //This function was supposed to be replaced by the functions defined in apiUtils .
   useEffect(() => {
     const fetchPost = async () => {
       if (typeof id === 'string') {

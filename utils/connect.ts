@@ -9,9 +9,11 @@ declare global {
     }
   }
 }
-
+/*
+This snippet of code is here to avoid creating a new instance of PrismaClient everytime we need to 
+connect to the database
+*/
 let prisma: PrismaClient;
-
 if (process.env.NODE_ENV === 'production') {
     prisma = new PrismaClient();
 } else {

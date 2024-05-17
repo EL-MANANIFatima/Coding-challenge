@@ -10,3 +10,14 @@
     margin-left: 230px; 
     width: calc(100% - 230px); 
 }
+.toast-container {
+    width: 300px;
+    right: 0 !important; 
+}
+
+.toast-body {
+    min-height: 50px; 
+    padding: 10px;
+    font-size: 0.875rem; 
+}
+
